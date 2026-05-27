@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hoshi Trivia — Wibu Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ════════════════════════════════════════
+       ROOT — semua ukuran relatif terhadap vh/vw
+       ════════════════════════════════════════ */
+    :root {
+      --bg-deep:   #0d0f1a;
+      --bg-card:   #161929;
+      --bg-panel:  #1e2235;
+      --accent:    #f72585;
+      --accent2:   #4cc9f0;
+      --accent3:   #7209b7;
+      --gold:      #ffd60a;
+      --txt:       #e8eaf6;
+      --txt-dim:   #8892b0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden; /* NO SCROLL */
+    }
+
+    body {
+      background: var(--bg-deep)
+        url('https://raw.githubusercontent.com/LOUKA51/Saving-Image-Walpaper-for-koya/refs/heads/main/wp15037159-clair-obscur-expedition-33-wallpapers%20(1)-1920x1080.png')
+        center/cover no-repeat fixed;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      color: var(--txt);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dark overlay + stars */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        rgba(13,15,26,.82),
+        radial-gradient(1.5px 1.5px at 12% 18%, rgba(255,255,255,.5) 0%, transparent 100%),
+        radial-gradient(1px   1px   at 58% 48%, rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(2px   2px   at 79% 13%, rgba(255,255,255,.55) 0%, transparent 100%),
+        radial-gradient(1px   1px   at 38% 78%, rgba(255,255,255,.28) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 53% 33%, rgba(76,201,240,.65) 0%, transparent 100%),
+        radial-gradient(1px   1px   at 68% 88%, rgba(247,37,133,.45) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ════════════════════════════════════════
+       LAYOUT UTAMA — 100vh, 3 baris: header | tengah | bawah
+       ════════════════════════════════════════ */
+    #app {
+      position: relative; z-index: 1;
+      width: 100%; height: 100vh;
+      display: flex; flex-direction: column;
+      padding: 1.2vh 2vw 1.2vh;
+      gap: 1vh;
+    }
+
+    /* ── HEADER (baris 1) ── */
+    #header {
+      flex: 0 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1vw;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: var(--bg-panel); border: 2px solid #2a2f45;
+      border-radius: 999px;
+      padding: .4vh 1.4vw;
+      font-size: clamp(.6rem, 1vw, .9rem);
+      font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--accent); box-shadow: 0 0 16px rgba(247,37,133,.25);
+      white-space: nowrap;
+    }
+
+    #title-text {
+      font-family: 'Dela Gothic One', sans-serif;
+      font-size: clamp(1.8rem, 4vh, 3.6rem);
+      line-height: 1;
+      color: var(--accent);
+      text-shadow: 0 0 28px rgba(247,37,133,.9), 0 0 56px rgba(247,37,133,.5);
+    }
+
+    #subtitle {
+      font-size: clamp(.65rem, 1.1vh, 1rem);
+      font-weight: 800; letter-spacing: .06em;
+      color: var(--txt-dim);
+      white-space: nowrap;
+    }
+
+    /* Progress dots */
+    #progress-dots {
+      display: flex; align-items: center; gap: clamp(5px, .8vw, 12px);
+    }
+    .q-dot {
+      width:  clamp(10px, 1.2vw, 16px);
+      height: clamp(10px, 1.2vw, 16px);
+      border-radius: 50%;
+      background: #2a2f45;
+      transition: all .3s;
+    }
+    .q-dot.done  { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+    .q-dot.active{ background: var(--accent);  box-shadow: 0 0 12px var(--accent); transform: scale(1.45); }
+
+    /* ── MAIN AREA (baris 2) — mengisi sisa ruang ── */
+    #main {
+      flex: 1 1 0;
+      min-height: 0;
+      display: flex; gap: 1.5vw;
+    }
+
+    /* Kolom Kiri: Pertanyaan + Grid Jawaban */
+    #left-col {
+      flex: 1 1 0;
+      min-width: 0; min-height: 0;
+      display: flex; flex-direction: column; gap: 1vh;
+    }
+
+    /* Kolom Kanan: Score Panel */
+    #right-col {
+      flex: 0 0 22vw;
+      min-height: 0;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── Panel pertanyaan ── */
+    #q-panel {
+      flex: 0 0 auto;
+      background: var(--bg-panel);
+      border: 2px solid #2a2f45;
+      border-radius: 1rem;
+      padding: 1.5vh 1.8vw;
+      box-shadow: 0 4px 28px rgba(0,0,0,.7);
+    }
+
+    #q-label {
+      font-size: clamp(.6rem, 1vw, .88rem);
+      font-weight: 800; text-transform: uppercase; letter-spacing: .18em;
+      color: var(--accent2);
+      text-shadow: 0 0 16px rgba(76,201,240,.9);
+      display: block; margin-bottom: .5vh;
+    }
+
+    #question-text {
+      font-size: clamp(1rem, 2.2vh, 1.9rem);
+      font-weight: 800;
+      line-height: 1.3;
+      color: var(--txt);
+    }
+
+    /* ── Grid Jawaban ── */
+    #answers-grid {
+      flex: 1 1 0;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(.4rem, .8vh, .9rem);
+    }
+
+    /* ── KARTU ── */
+    .card-wrap {
+      perspective: 900px;
+      cursor: pointer; user-select: none;
+      min-height: 0;
+    }
+    .card-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform .5s cubic-bezier(.4,0,.2,1);
+    }
+    .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: .85rem;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: .15em;
+      overflow: hidden;
+    }
+    .card-back-face { transform: rotateY(180deg); }
+
+    .card-wrap:not(.flipped):hover .cf-front {
+      background: #1e2a3a !important;
+      border-color: var(--accent2) !important;
+      box-shadow: 0 0 18px rgba(76,201,240,.4);
+    }
+    .card-wrap:not(.flipped):hover .cf-num { color: var(--accent2); }
+
+    .cf-num {
+      font-family: 'Dela Gothic One', sans-serif;
+      font-size: clamp(1.5rem, 3.5vh, 3.2rem);
+      line-height: 1; color: var(--accent); transition: color .2s;
+    }
+    .cf-hint {
+      font-size: clamp(.5rem, .9vh, .78rem);
+      color: var(--txt-dim); font-weight: 700;
+    }
+
+    .ans-text {
+      font-size: clamp(.85rem, 2vh, 1.8rem);
+      font-weight: 800; color: #fff;
+      text-align: center; line-height: 1.15;
+      padding: 0 .4em;
+      text-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+    .ans-pts {
+      font-family: 'Dela Gothic One', sans-serif;
+      font-size: clamp(1.5rem, 3.2vh, 2.9rem);
+      line-height: 1; color: #fff;
+      text-shadow: 0 0 16px rgba(255,255,255,.6);
+    }
+    .ans-poin-label {
+      font-size: clamp(.45rem, .8vh, .7rem);
+      letter-spacing: .18em; text-transform: uppercase;
+      color: rgba(255,255,255,.6); font-weight: 700;
+    }
+
+    /* ── Score Panel (kanan) ── */
+    #score-panel {
+      flex: 1 1 0;
+      min-height: 0;
+      background: var(--bg-panel);
+      border: 2px solid #2a2f45;
+      border-radius: 1rem;
+      padding: 2vh 1.4vw;
+      box-shadow: 0 4px 28px rgba(0,0,0,.7);
+      display: flex; flex-direction: column; gap: 1.2vh;
+    }
+
+    .panel-label {
+      font-size: clamp(.55rem, .9vh, .82rem);
+      font-weight: 800; text-transform: uppercase;
+      letter-spacing: .14em; color: var(--txt-dim);
+    }
+
+    #score-display {
+      font-family: 'Dela Gothic One', sans-serif;
+      font-size: clamp(2rem, 5.5vh, 5rem);
+      line-height: 1; color: var(--gold);
+      text-shadow: 0 0 18px rgba(255,214,10,.9), 0 0 36px rgba(255,214,10,.5);
+    }
+    #score-display .denom {
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      font-size: clamp(.75rem, 1.5vh, 1.2rem);
+      font-weight: 400; color: var(--txt-dim);
+    }
+
+    #opened-count {
+      font-size: clamp(1.2rem, 2.8vh, 2.4rem);
+      font-weight: 800; color: var(--txt); line-height: 1;
+    }
+
+    .bar-track {
+      height: clamp(6px, .9vh, 12px);
+      background: #252840; border-radius: 99px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent3), var(--accent), var(--gold));
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 10px rgba(247,37,133,.6);
+    }
+
+    #pct-text {
+      text-align: right;
+      font-size: clamp(.55rem, .9vh, .82rem); color: var(--txt-dim);
+    }
+
+    #complete-badge {
+      border-radius: .75rem; padding: 1vh .8vw;
+      text-align: center; font-weight: 800;
+      font-size: clamp(.65rem, 1.1vh, 1rem);
+      background: rgba(247,37,133,.12);
+      border: 2px solid var(--accent); color: var(--accent);
+    }
+
+    .score-spacer { flex: 1; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: .6vw; }
+
+    .btn-primary {
+      flex: 1; background: linear-gradient(135deg, var(--accent3), var(--accent));
+      color: #fff; font-weight: 800; border-radius: .75rem;
+      padding: 1.2vh .5vw;
+      font-size: clamp(.7rem, 1.4vh, 1.15rem);
+      border: none; cursor: pointer; letter-spacing: .02em;
+      box-shadow: 0 4px 20px rgba(247,37,133,.4);
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-primary:hover  { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(.97); }
+    .btn-primary:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      flex: 1; background: transparent;
+      color: var(--txt-dim); font-weight: 700; border-radius: .75rem;
+      padding: 1.2vh .5vw;
+      font-size: clamp(.7rem, 1.4vh, 1.15rem);
+      border: 2px solid #2a2f45; cursor: pointer; transition: all .2s;
+    }
+    .btn-ghost:hover  { border-color: var(--txt-dim); color: var(--txt); }
+    .btn-ghost:active { transform: scale(.97); }
+
+    /* ── Slide transition ── */
+    #left-col { transition: opacity .3s ease, transform .3s ease; }
+    #left-col.exiting  { opacity: 0; transform: translateX(-30px); }
+    #left-col.entering { opacity: 0; transform: translateX(30px); }
+
+    /* ── COMPLETE SCREEN (fullscreen overlay) ── */
+    #complete-screen {
+      display: none;
+      position: fixed; inset: 0; z-index: 10;
+      align-items: center; justify-content: center;
+      background: rgba(13,15,26,.92);
+      backdrop-filter: blur(8px);
+    }
+    #complete-screen.show { display: flex; }
+
+    .complete-card {
+      background: var(--bg-panel);
+      border: 2px solid #2a2f45;
+      border-radius: 1.5rem;
+      padding: 4vh 4vw;
+      text-align: center;
+      box-shadow: 0 8px 60px rgba(247,37,133,.2);
+      max-width: 50vw;
+    }
+
+    .sakura {
+      display: inline-block;
+      font-size: clamp(3rem, 7vh, 6rem);
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(-5deg); }
+      50%      { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .complete-title {
+      font-family: 'Dela Gothic One', sans-serif;
+      font-size: clamp(2.5rem, 6vh, 5.5rem);
+      color: var(--accent);
+      text-shadow: 0 0 30px rgba(247,37,133,.9), 0 0 60px rgba(247,37,133,.5);
+      margin: 1vh 0 .5vh;
+    }
+
+    .grand-box {
+      display: inline-block;
+      background: rgba(13,15,26,.85);
+      border: 2px solid #2a2f45;
+      border-radius: 1.2rem;
+      padding: 2vh 3vw; margin: 2vh 0;
+    }
+    #grand-total {
+      font-family: 'Dela Gothic One', sans-serif;
+      font-size: clamp(3.5rem, 9vh, 8rem);
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(255,214,10,.9), 0 0 40px rgba(255,214,10,.5);
+      line-height: 1;
+    }
+    #grand-max {
+      font-size: clamp(.75rem, 1.3vh, 1.1rem); color: var(--txt-dim); margin-top: .3vh;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══ HEADER ══ -->
+  <div id="header">
+    <div class="badge">🎌 Hoshi Trivia · Wibu Edition</div>
+
+    <div style="text-align:center;">
+      <div id="title-text">HOSHI TRIVIA</div>
+      <div id="subtitle">⚡ Jawaban paling banyak dipilih para wibu ⚡</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:.6vh;">
+      <div id="progress-dots"></div>
+    </div>
+  </div>
+
+  <!-- ══ MAIN ══ -->
+  <div id="main">
+
+    <!-- Kiri: Pertanyaan + Kartu -->
+    <div id="left-col">
+
+      <div id="q-panel">
+        <span id="q-label">Pertanyaan 1 / 5</span>
+        <p id="question-text"></p>
+      </div>
+
+      <div id="answers-grid"></div>
+
+    </div>
+
+    <!-- Kanan: Skor -->
+    <div id="right-col">
+      <div id="score-panel">
+
+        <div>
+          <p class="panel-label">Total Poin</p>
+          <div id="score-display">0 <span class="denom">/ 100</span></div>
+        </div>
+
+        <div>
+          <p class="panel-label">Terbuka</p>
+          <div id="opened-count">0 / 10</div>
+        </div>
+
+        <div>
+          <div class="bar-track">
+            <div class="bar-fill" id="score-bar" style="width:0%"></div>
+          </div>
+          <p id="pct-text">0%</p>
+        </div>
+
+        <div id="complete-badge" class="hidden">
+          🎉 Semua jawaban kebuka!<br>sugoi desu ne~
+        </div>
+
+        <div class="score-spacer"></div>
+
+        <div class="btn-row">
+          <button class="btn-ghost" onclick="resetQuestion()">🔄 Ulangi</button>
+          <button class="btn-primary" id="next-btn" onclick="nextQuestion()" disabled>Lanjut ➜</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+</div><!-- /app -->
+
+<!-- ══ COMPLETE SCREEN ══ -->
+<div id="complete-screen">
+  <div class="complete-card">
+    <div class="sakura">🌸</div>
+    <div class="complete-title">GAME CLEAR!</div>
+    <p style="color:var(--txt-dim); font-size:clamp(.85rem,1.8vh,1.5rem); font-weight:800;">
+      Lo udah ngejawab semua pertanyaannya~
+    </p>
+    <p style="color:var(--accent2); font-size:clamp(.8rem,1.5vh,1.25rem); font-weight:800; margin-top:.4vh;">
+      Benar-benar seorang wibu sejati! 🎌✨
+    </p>
+    <div class="grand-box">
+      <p class="panel-label" style="font-size:clamp(.6rem,1vh,.9rem);">Grand Total Poin</p>
+      <div id="grand-total">0</div>
+      <p id="grand-max">/ 0</p>
+    </div>
+    <div>
+      <button class="btn-primary" style="width:100%; max-width:320px; padding:1.5vh 2vw; font-size:clamp(.85rem,1.6vh,1.3rem);" onclick="restartGame()">
+        🔄 Main Lagi dari Awal
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+const DATA = [
+  {
+    question: "Siapa karakter anime wanita (waifu) yang paling populer?",
+    answers: [
+      { text: "Rem", pts: 25 }, { text: "Zero Two", pts: 20 },
+      { text: "Asuna", pts: 15 }, { text: "Miku Nakano", pts: 12 },
+      { text: "Hinata", pts: 10 }, { text: "Mikasa", pts: 7 },
+      { text: "Emilia", pts: 5 }, { text: "Tohru", pts: 3 },
+      { text: "Aqua", pts: 2 }, { text: "Nezuko", pts: 1 },
+    ]
+  },
+  {
+    question: "Sebutkan satu kata kiasan/trope yang bikin anime isekai jadi membosankan!",
+    answers: [
+      { text: "Overpowered", pts: 28 }, { text: "Harem", pts: 22 },
+      { text: "Klise", pts: 18 }, { text: "Fanservice", pts: 12 },
+      { text: "Cheat", pts: 8 }, { text: "Reinkarnasi", pts: 5 },
+      { text: "Sistem Game", pts: 3 }, { text: "Monoton", pts: 2 },
+      { text: "Lambat", pts: 1 }, { text: "Gantung", pts: 1 },
+    ]
+  },
+  {
+    question: "Sebutkan sebutan atau ejekan yang sering diucapkan non-wibu saat melihat anime!",
+    answers: [
+      { text: "Kartun", pts: 30 }, { text: "Bocah", pts: 25 },
+      { text: "Bau Bawang", pts: 15 }, { text: "Aneh", pts: 12 },
+      { text: "Gajelas", pts: 8 }, { text: "Wibu", pts: 5 },
+      { text: "Boring", pts: 3 }, { text: "Alay", pts: 1 },
+    ]
+  },
+  {
+    question: "Sebutkan istilah bahasa Jepang/wibu yang paling sering muncul di media sosial!",
+    answers: [
+      { text: "Waifu", pts: 28 }, { text: "Isekai", pts: 22 },
+      { text: "Senpai", pts: 18 }, { text: "Kawaii", pts: 12 },
+      { text: "Nakama", pts: 8 }, { text: "Sugoi", pts: 5 },
+      { text: "Tsundere", pts: 3 }, { text: "Ara ara", pts: 2 },
+      { text: "Yandere", pts: 1 }, { text: "Nani", pts: 1 },
+    ]
+  },
+  {
+    question: "Apa benda atau aset yang paling sering dikoleksi/dicari oleh seorang wibu?",
+    answers: [
+      { text: "Figure", pts: 28 }, { text: "Merchandise", pts: 22 },
+      { text: "Manga", pts: 18 }, { text: "Poster", pts: 12 },
+      { text: "Nendoroid", pts: 8 }, { text: "Light Novel", pts: 6 },
+      { text: "Baju Cosplay", pts: 4 }, { text: "Dakimakura", pts: 2 },
+      { text: "Gantungan Kunci", pts: 1 }, { text: "Wall Scroll", pts: 1 },
+    ]
+  },
+];
+// ================================================================
+
+let currentQ = 0, totalScore = 0, openedCount = 0, grandTotal = 0;
+const grandMax = DATA.length * 100;
+
+function buildDots() {
+  const wrap = document.getElementById('progress-dots');
+  wrap.innerHTML = '';
+  DATA.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'q-dot' + (i === currentQ ? ' active' : i < currentQ ? ' done' : '');
+    d.id = 'dot-' + i;
+    wrap.appendChild(d);
+  });
+}
+
+function updateDots() {
+  DATA.forEach((_, i) => {
+    const d = document.getElementById('dot-' + i);
+    if (!d) return;
+    d.className = 'q-dot' + (i === currentQ ? ' active' : i < currentQ ? ' done' : '');
+  });
+}
+
+function buildGrid() {
+  const { question, answers } = DATA[currentQ];
+  document.getElementById('question-text').textContent = question;
+  document.getElementById('q-label').textContent = 'Pertanyaan ' + (currentQ + 1) + ' / ' + DATA.length;
+
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+
+  /* Adjust grid rows based on answer count */
+  const rows = Math.ceil(answers.length / 2);
+  grid.style.gridTemplateRows = 'repeat(' + rows + ', 1fr)';
+
+  answers.forEach((ans, idx) => {
+    const num = idx + 1;
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
+    wrap.setAttribute('role', 'button');
+    wrap.setAttribute('aria-label', 'Jawaban ' + num);
+
+    wrap.innerHTML =
+      '<div class="card-inner">' +
+        '<div class="card-face cf-front" style="background:var(--bg-card);border:2px solid #2a2f45;">' +
+          '<span class="cf-num">' + num + '</span>' +
+          '<span class="cf-hint">klik buat buka</span>' +
+        '</div>' +
+        '<div class="card-face card-back-face" style="' +
+          'background:linear-gradient(135deg,var(--accent3),var(--accent));' +
+          'border:2px solid rgba(247,37,133,.4);' +
+          'box-shadow:0 0 28px rgba(247,37,133,.35);">' +
+          '<span class="ans-text">' + ans.text + '</span>' +
+          '<span class="ans-pts">' + ans.pts + '</span>' +
+          '<span class="ans-poin-label">poin</span>' +
+        '</div>' +
+      '</div>';
+
+    wrap.addEventListener('click', () => flipCard(wrap, ans.pts));
+    grid.appendChild(wrap);
+  });
+}
+
+function flipCard(card, pts) {
+  if (card.classList.contains('flipped')) return;
+  card.classList.add('flipped');
+  totalScore += pts; openedCount++;
+  updateScorePanel();
+}
+
+function updateScorePanel() {
+  const sd = document.getElementById('score-display');
+  sd.innerHTML = totalScore + ' <span class="denom">/ 100</span>';
+  document.getElementById('score-bar').style.width = totalScore + '%';
+  document.getElementById('opened-count').textContent = openedCount + ' / ' + DATA[currentQ].answers.length;
+  document.getElementById('pct-text').textContent = totalScore + '%';
+
+  const allOpen = openedCount === DATA[currentQ].answers.length;
+  document.getElementById('complete-badge').classList.toggle('hidden', !allOpen);
+
+  const btn = document.getElementById('next-btn');
+  btn.disabled = openedCount === 0;
+  btn.textContent = (currentQ === DATA.length - 1 && openedCount > 0) ? '🏁 Selesai' : 'Lanjut ➜';
+}
+
+function resetQuestion() {
+  totalScore = 0; openedCount = 0;
+  updateScorePanel(); buildGrid();
+}
+
+function nextQuestion() {
+  grandTotal += totalScore;
+  const isLast = currentQ === DATA.length - 1;
+  const lc = document.getElementById('left-col');
+  lc.classList.add('exiting');
+
+  setTimeout(() => {
+    if (isLast) {
+      document.getElementById('grand-total').textContent = grandTotal;
+      document.getElementById('grand-max').textContent = '/ ' + grandMax;
+      document.getElementById('complete-screen').classList.add('show');
+      updateDots(); return;
+    }
+    currentQ++; totalScore = 0; openedCount = 0;
+    buildGrid(); updateScorePanel(); updateDots();
+    lc.classList.remove('exiting');
+    lc.classList.add('entering');
+    void lc.offsetWidth;
+    lc.classList.remove('entering');
+  }, 300);
+}
+
+function restartGame() {
+  currentQ = 0; totalScore = 0; openedCount = 0; grandTotal = 0;
+  document.getElementById('complete-screen').classList.remove('show');
+  buildDots(); buildGrid(); updateScorePanel();
+}
+
+buildDots();
+buildGrid();
+updateScorePanel();
+</script>
+</body>
+</html>
